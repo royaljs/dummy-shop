@@ -311,8 +311,8 @@ const declineOrder = async (ctx, next) => {
         .post(`${pushNotificationServer}/push`, {
           user_id: order.getDataValue("user_id"),
           notification: {
-            title: "WAPL Shop 주문 거절",
-            body: "WAPL Shop에서 주문을 거절했습니다.",
+            title: "Shop 주문 거절",
+            body: "Shop에서 주문을 거절했습니다.",
           },
         })
         .then((data) => console.log("호출 성공"))
