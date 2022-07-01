@@ -53,10 +53,12 @@ const LatestProducts = (props) => {
               primary={product.name}
               // secondary={`Updated ${product.updatedAt.fromNow()}`}
             />
-            <IconButton edge="end" size="small">
-              <MoreVertIcon
-                onClick={() => alert('TODO: action List 추가하기')}
-              />
+           <IconButton
+              edge="end"
+              size="small"
+              onClick={() => alert('TODO: action List 추가하기')}
+            >
+              <MoreVertIcon />
             </IconButton>
           </ListItem>
         ))}
