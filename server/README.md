@@ -39,6 +39,13 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 | **price** (integer)  _required_    | Product의 가격                        |
 | **description** (string)    | Product에 대한 설명                        |
 
+## Image
+| attribute (Type)           | Description                          |
+| ---------------                         | ------------------------------------------------ |
+| **id** (string) _required_   | Image의 고유번호     |
+| **shop_id** (string)   | 해당 Image가 포함된 Shop의 고유번호     |
+| **prodct_id** (string)      | 해당 Image가 포함된 Product의 고유번호                       |
+| **filename** (integer)  _required_    | 이미지 서버 파일 시스템에 저장될 파일명 (확장자 포함)                        |
 
 # API 명세
 
@@ -106,3 +113,39 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 * 특정 Product을 삭제한다.
 * request body 없음
 * response는 삭제 메시지
+
+# Image API
+
+이미지 API를 통해 관리되는 이미지 파일은 ./images 디렉토리에 저장된다.
+
+## GET /images/:id
+* 특정 Image 파일을 다운로드한다.
+* request body 없음
+* response는 Image 파일
+
+## GET /images/product/:id
+* 특정 Product에 대한 이미지 id 목록을 조회한다.
+* request body 없음
+* response는 product_id 및 image_id의 배열 객체
+
+## GET /images/shop/:id
+* 특정 Shop에 대한 이미지 id 목록을 조회한다.
+* request body 없음
+* response는 shop_id 및 image_id의 배열 객체
+
+## POST /images/product/:id
+* 특정 Product에 대한 이미지를 업로드 한다.
+* request body: form-data 형식. key는 "image"이며, 한번에 10개의 이미지까지 업로드 가능하다.
+* response는 product_id 및 image_id의 배열 객체
+
+## POST /images/shop/:id
+* 특정 Shop에 대한 이미지를 업로드 한다.
+* request body: form-data 형식. key는 "image"이며, 한번에 10개의 이미지까지 업로드 가능하다.
+* response는 shop_id 및 image_id의 배열 객체
+
+## POST /images/:id/delete
+* 특정 이미지를 서버에서 삭제한다. 해당 이미지는 DB와 파일시스템에서 완전히 삭제된다.
+* request body: 없음
+* response는 이미지 삭제 성공 메시지
+
+## 이미지 수정 API는 제공하지 않는다. 수정이 필요한 경우, 기존 이미지를 삭제한 후 새로운 이미지를 업로드 한다.
