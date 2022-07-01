@@ -21,6 +21,18 @@ router.get("/", controller.getShopList);
 router.get("/:id/product", controller.getProductListByShopId);
 
 /**
+ * Shop에 들어온 주문 목록 조회
+ * @route GET /shops/:shop_id/orders
+ */
+ router.get("/:id/orders", controller.getOrderList);
+
+/**
+ * Shop에 들어온 특정주문 조회
+ * @route GET /shops/:id/orders/:order_id
+ */
+ router.get("/:id/orders/:order_id", controller.getOrder);
+
+/**
  * Shop 생성
  * @route POST /shops
  */

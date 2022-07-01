@@ -230,6 +230,17 @@ const approveOrder = async (ctx, next) => {
         },
       });
 
+      await models.Order.update(
+        {
+          status: "approved",
+        },
+        {
+          where: {
+            id: ctx.request.params.order_id,
+          },
+        }
+      );
+
       await axios
         .post(`${pushNotificationServer}/push`, {
           user_id: order.getDataValue("user_id"),
@@ -420,13 +431,30 @@ const deleteImage = async (ctx, next) => {
   }
 };
 
-//approve 요청받은 주문을 조회한다.
+//Shop이 받은 주문 목록을 조회한다.
 const getOrderList = async (ctx, next) => {
   try {
     const id = ctx.request.params.id;
     const order = await models.Order.findAll({
       where: {
         shop_id: id,
+      },
+    });
+    ctx.body = order;
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+//Shop이 받은 특정 주문을 조회한다.
+const getOrder = async (ctx, next) => {
+  try {
+    const shop_id = ctx.request.params.id;
+    const order_id = ctx.request.params.order_id;
+    const order = await models.Order.findOne({
+      where: {
+        shop_id: shop_id,
+        id: order_id,
       },
     });
     ctx.body = order;
@@ -446,6 +474,8 @@ module.exports = {
   //Shop API
   getShop,
   getShopList,
+  getOrderList,
+  getOrder,
   getProductListByShopId,
   createShop,
   updateShop,
@@ -459,7 +489,4 @@ module.exports = {
   uploadProductImage,
   uploadShopImage,
   deleteImage,
-
-  //Order API
-  getOrderList,
 };

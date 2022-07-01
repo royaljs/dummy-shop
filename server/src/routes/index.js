@@ -3,7 +3,6 @@ const router = new Router();
 const shop = require("./shop");
 const product = require("./product");
 const image = require("./image");
-const order = require("./order");
 const webhook = require("./webhook");
 
 router.get("/", async (ctx, next) => {
@@ -12,16 +11,13 @@ router.get("/", async (ctx, next) => {
   });
   
 //Product API
-router.use("/products", product.routes());
+router.use("/product", product.routes());
 
-//shops API
+//Shop API
 router.use("/shops", shop.routes());
 
 //Iamge 서버 API
 router.use("/images", image.routes());
-
-//Order API
-router.use("/orders", order.routes());
 
 //webhook API
 router.use("/webhook", webhook.routes());
