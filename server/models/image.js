@@ -1,6 +1,6 @@
 const Sequelize = require("sequelize");
 
-module.exports = class Product extends (
+module.exports = class Image extends (
   Sequelize.Model
 ) {
   static init(sequelize) {
@@ -12,30 +12,23 @@ module.exports = class Product extends (
           unique: true,
           primaryKey: true,
         },
+        product_id: {
+          type: Sequelize.STRING(40),
+         },
         shop_id: {
           type: Sequelize.STRING(40),
+        },
+        filename: {
+          type: Sequelize.STRING(50),
           allowNull: false,
         },
-        name: {
-          type: Sequelize.STRING(40),
-          allowNull: false,
-        },
-        price: {
-          // 상품별 금액
-          type: Sequelize.INTEGER,
-          allowNull: false,
-        },
-        description: {
-          // 상품 설명(ex. 메뉴판에 뜨는 상세 설명)
-          type: Sequelize.STRING(100),
-        },
-      },
+       },
       {
         sequelize,
         timestamps: false,
         underscored: false,
-        modelName: "Product",
-        tableName: "product_table",
+        modelName: "Image",
+        tableName: "image_table",
         paranoid: false,
         freezeTableName: true,
         charset: "utf8",
@@ -45,7 +38,6 @@ module.exports = class Product extends (
   }
 
   static associate(db) {
-    db.Product.belongsTo(db.Shop, { foreignKey: "shop_id", targetKey: "id" });
-    db.Product.hasMany(db.Image, { foreignKey: "product_id", sourceKey: "id" });
+    db.Image.belongsTo(db.Product, { foreignKey: "product_id", targetKey: "id" });
   }
 };

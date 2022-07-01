@@ -1,9 +1,11 @@
 const createError = require("http-errors");
 const models = require("../../models");
 const uuid = require("uuid"); // v4 random uuid 사용
+const fs = require("fs");
+const path = require("path");
+const mime = require("mime");
 
 /**
- *
  * Product API
  */
 const getProduct = async (ctx, next) => {
@@ -89,7 +91,6 @@ const deleteProduct = async (ctx, next) => {
 };
 
 /**
- *
  * Shop API
  */
 const getShop = async (ctx, next) => {
@@ -209,12 +210,12 @@ const deleteShop = async (ctx, next) => {
 /**
  * 현재는 /shop/:id/appove 로 주문 승인 요청 API가 호출되면,
  * Dummy Shop 서버에서 즉시 approve/decline 응답을 한다.
- * 
+ *
  * TODO:
  * 1. Shop마다 승인 요청 받은 주문 내역을 저장할 Order DB를 추가한다.
  * 2. 이 API(approveOrder)의 응답은 요청이 정상적으로 전달되었다는 메시지로 대체한다.
  * 3. Shop에 들어온 요청을 승인/거절 할 수 있는 Dummy Shop Dashboard 페이지를 개발한다.
- * 4. Dummy Shop Dashboard에서 승인/거절하면 Order 객체의 상태를 바꾸고, 
+ * 4. Dummy Shop Dashboard에서 승인/거절하면 Order 객체의 상태를 바꾸고,
  * 이 Order 객체의 상태를 polling으로 관찰할 Dummy Shop Library를 개발한다.
  */
 const approveOrder = async (ctx, next) => {
@@ -256,6 +257,163 @@ const approveOrder = async (ctx, next) => {
   }
 };
 
+/**
+ * Image Server API
+ */
+
+//image_id에 대한 이미지 파일을 응답한다.
+const getImage = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    //이미지 DB 조회
+    const image = await models.Image.findOne({
+      where: {
+        id: id,
+      },
+    });
+    ctx.set("Content-type", mime.getType(image.filename)); //이미지 확장자별 Content-Type 설정
+    ctx.body = fs.createReadStream(
+      path.join(__dirname, "../../images/", image.filename)
+    );
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+/**
+ * 상품별로 여러개의 이미지를 가질 수 있다고 가정.
+ * /images/product/:id 로 호출하면 해당 product_id를 갖는 Image 객체의 목록이 반환된다.
+ * Front-end에서는 이 API로 얻은 Iamge 객체들의 image_id를 이용해 /images/:id API를 호출하여 개별 이미지를 얻을 수 있다.
+ */
+const getImageListByProductId = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    let image_ids = [];
+    const imageList = await models.Image.findAll({
+      where: {
+        product_id: id,
+      },
+    });
+    imageList.forEach((image) => {
+      image_ids.push(image.id);
+    });
+    ctx.body = {
+      product_id: id,
+      image_ids: image_ids,
+    };
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+/**
+ * Shop별로 여러개의 이미지를 가질 수 있다고 가정.
+ * /images/shop/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
+ * Front-end에서는 이 API로 얻은 Iamge 객체들의 image_id를 이용해 /images/:id API를 호출하여 개별 이미지를 얻을 수 있다.
+ */
+const getImageListByShopId = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    let image_ids = [];
+    const imageList = await models.Image.findAll({
+      where: {
+        shop_id: id,
+      },
+    });
+    imageList.forEach((image) => {
+      image_ids.push(image.id);
+    });
+    ctx.body = {
+      shop_id: id,
+      image_ids: image_ids,
+    };
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+//상품 이미지를 업로드 한다.
+const uploadProductImage = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    let image_ids = [];
+    for (let i = 0; i < ctx.request.files.length; i++) {
+      const image_id = ctx.request.files[i].filename.substring(
+        0,
+        ctx.request.files[i].filename.lastIndexOf(".")
+      );
+      image_ids.push(image_id);
+      await models.Image.create({
+        id: image_id,
+        product_id: id, //이미지가 포함된 shop_id
+        filename: ctx.request.files[i].filename, //확장자를 포함한 파일명
+      });
+    }
+    ctx.body = {
+      product_id: id,
+      image_ids: image_ids,
+    };
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+//Shop 이미지를 업로드 한다.
+const uploadShopImage = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    let image_ids = [];
+    for (let i = 0; i < ctx.request.files.length; i++) {
+      const image_id = ctx.request.files[i].filename.substring(
+        0,
+        ctx.request.files[i].filename.lastIndexOf(".")
+      );
+      image_ids.push(image_id);
+      await models.Image.create({
+        id: image_id,
+        shop_id: id, //이미지가 포함된 shop_id
+        filename: ctx.request.files[i].filename, //확장자를 포함한 파일명
+      });
+    }
+    ctx.body = {
+      shop_id: id,
+      image_ids: image_ids,
+    };
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+//이미지를 삭제한다.
+const deleteImage = async (ctx, next) => {
+  const id = ctx.request.params.id;
+  let filename;
+  try {
+    const image = await models.Image.findOne({
+      where: {
+        id: id,
+      },
+    });
+    filename = image.filename;
+  } catch (err) {
+    throw createError(400, "해당 이미지 파일이 존재하지 않습니다.");
+  }
+
+  try {
+    await models.Image.destroy({
+      where: {
+        id: id,
+      },
+    });
+    fs.unlink(path.join(__dirname, "../../images/", filename), (err) => {
+      if (err) console.error(err);
+    });
+    ctx.body = "해당 이미지 파일이 삭제 되었습니다.";
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
 module.exports = {
   //Product API
   getProduct,
@@ -272,4 +430,12 @@ module.exports = {
   updateShop,
   deleteShop,
   approveOrder,
+
+  //Image Server API
+  getImage,
+  getImageListByProductId,
+  getImageListByShopId,
+  uploadProductImage,
+  uploadShopImage,
+  deleteImage,
 };

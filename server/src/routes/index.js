@@ -2,18 +2,20 @@ const Router = require("koa-router");
 const router = new Router();
 const shop = require("./shop");
 const product = require("./product");
+const image = require("./image");
 
 router.get("/", async (ctx, next) => {
     ctx.body = "HTTP Method, URI를 확인 하세요";
     await next();
   });
   
-
-//상품 정보 CRUD
+//Product API
 router.use("/product", product.routes());
 
-//Dummy Shop의 모든 상품 목록
+//Shop API
 router.use("/shop", shop.routes());
 
+//Iamge 서버 API
+router.use("/images", image.routes());
 
 module.exports = router;

@@ -5,6 +5,8 @@ const config = require(path.join(__dirname, "../config/config"))[env];
 
 const Shop = require("./shop");
 const Product = require("./product");
+const Image = require("./image");
+
 const db = {};
 
 const sequelize = new Sequelize(
@@ -19,10 +21,14 @@ db.Sequelize = Sequelize;
 
 db.Shop = Shop;
 db.Product = Product;
+db.Image = Image;
+
 db.Shop.init(sequelize);
 db.Product.init(sequelize);
+db.Image.init(sequelize);
 
 Shop.associate(db);
 Product.associate(db);
+Image.associate(db);
 
 module.exports = db;
