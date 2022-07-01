@@ -19,9 +19,9 @@ router.get("/product/:id", controller.getImageListByProductId);
 
 /**
  * Shop에 대한 이미지 목록 조회
- * @route GET /images/shop/:id
+ * @route GET /images/shops/:id
  */
-router.get("/shop/:id", controller.getImageListByShopId);
+router.get("/shops/:id", controller.getImageListByShopId);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -50,10 +50,10 @@ router.post(
 
 /**
  *  Shop 이미지 업로드
- * @route POST /images/shop/:id
+ * @route POST /images/shops/:id
  */
 router.post(
-  "/shop/:id",
+  "/shops/:id",
   upload.array(
     "image",
     10 //한번에 최대 10개의 이미지 업로드 가능

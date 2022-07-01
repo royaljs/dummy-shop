@@ -51,37 +51,37 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 
 # Shop API
 
-## GET /shop
+## GET /shops
 * 등록된 모든 Shop의 목록을 조회한다.
 * request body 없음
 * response는 Shop 객체의 배열
 
-## GET /shop/:id
+## GET /shops/:id
 * 특정 Shop을 조회한다.
 * request body 없음
 * response는 Shop 객체
 
-## GET /shop/:id/product
+## GET /shops/:id/product
 * 특정 Shop에 포함된 상품 목록을 조회한다.
 * request body 없음
 * response는 Product 객체의 배열
 
-## POST /shop
+## POST /shops
 * Shop을 생성한다.
 * request body: name(필수), is_pay_later_allowed, address, contact_number, contact_email, description
 * response는 Shop 객체
 
-## POST /shop/:id/update
+## POST /shops/:id/update
 * Shop을 수정한다. (PUT 방식의 수정)
 * request body: name(필수), is_pay_later_allowed, address, contact_number, contact_email, description
 * response는 Shop 객체
 
-## POST /shop/:id/delete
+## POST /shops/:id/delete
 * 특정 Shop을 삭제한다.
 * request body 없음
 * response는 삭제 메시지
 
-## POST /shop/:id/approve
+## POST /shops/:id/approve
 * Shop에 주문 승인을 요청한다.
 * request body: order_id(주문 고유번호), pay_later(후불이면 true, 선불이면 false)
 * response는 현재 status(approve/decline), approve_id/decline_id, desc(주문 승인/거절에 대한 설명)으로 구성된다.
@@ -128,7 +128,7 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 * request body 없음
 * response는 product_id 및 image_id의 배열 객체
 
-## GET /images/shop/:id
+## GET /images/shops/:id
 * 특정 Shop에 대한 이미지 id 목록을 조회한다.
 * request body 없음
 * response는 shop_id 및 image_id의 배열 객체
@@ -138,7 +138,7 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 * request body: form-data 형식. key는 "image"이며, 한번에 10개의 이미지까지 업로드 가능하다.
 * response는 product_id 및 image_id의 배열 객체
 
-## POST /images/shop/:id
+## POST /images/shops/:id
 * 특정 Shop에 대한 이미지를 업로드 한다.
 * request body: form-data 형식. key는 "image"이며, 한번에 10개의 이미지까지 업로드 가능하다.
 * response는 shop_id 및 image_id의 배열 객체

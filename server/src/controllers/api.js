@@ -186,14 +186,14 @@ const deleteShop = async (ctx, next) => {
     const id = ctx.request.params.id;
     //Sequelize Transaction 생성
     await models.sequelize.transaction(async (transaction) => {
-      //Shop 삭제
+      //shops 삭제
       await models.Shop.destroy({
         where: {
           id: id,
         },
         transaction,
       });
-      //Shop에 포함된 Product 삭제
+      //shops에 포함된 Product 삭제
       await models.Product.destroy({
         where: {
           shop_id: id,
@@ -208,7 +208,7 @@ const deleteShop = async (ctx, next) => {
 };
 
 /**
- * 현재는 /shop/:id/appove 로 주문 승인 요청 API가 호출되면,
+ * 현재는 /shops/:id/appove 로 주문 승인 요청 API가 호출되면,
  * Dummy Shop 서버에서 즉시 approve/decline 응답을 한다.
  *
  * TODO:
@@ -227,6 +227,32 @@ const approveOrder = async (ctx, next) => {
       },
     });
     const requestBody = ctx.request.body;
+    const order = await models.Order.create({
+      id: requestBody.order_id,
+      user_id: requestBody.user_id,
+      shop_id: id,
+      total_amount: requestBody.total_amount,
+      price_amount: requestBody.price_amount,
+      tax_amount: requestBody.tax_amount,
+      discount_amount: requestBody.discount_amount,
+      description: requestBody.description,
+      });
+    if (requestBody.items) {
+      requestBody.items.forEach(async (item) => {
+        await models.Item.create({
+          id: uuid.v4(),
+          order_id: order_id,
+          product_id: item.product_id,
+          name: item.name,
+          total_amount: item.total_amount,
+          price_amount: item.price_amount,
+          tax_amount: item.tax_amount,
+          discount_amount: item.discount_amount,
+          quantity: item.quantity,
+        });
+      });
+    }
+
     // 선불 주문인 경우(결제까지 완료된 주문)
     if (!requestBody.pay_later) {
       ctx.body = {
@@ -308,7 +334,7 @@ const getImageListByProductId = async (ctx, next) => {
 
 /**
  * Shop별로 여러개의 이미지를 가질 수 있다고 가정.
- * /images/shop/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
+ * /images/shops/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
  * Front-end에서는 이 API로 얻은 Iamge 객체들의 image_id를 이용해 /images/:id API를 호출하여 개별 이미지를 얻을 수 있다.
  */
 const getImageListByShopId = async (ctx, next) => {
@@ -358,7 +384,7 @@ const uploadProductImage = async (ctx, next) => {
   }
 };
 
-//Shop 이미지를 업로드 한다.
+//shops 이미지를 업로드 한다.
 const uploadShopImage = async (ctx, next) => {
   try {
     const id = ctx.request.params.id;
@@ -414,6 +440,21 @@ const deleteImage = async (ctx, next) => {
   }
 };
 
+//approve 요청받은 주문을 조회한다.
+const getOrderList = async (ctx, next) => {
+  try {
+    const id = ctx.request.params.id;
+    const order = await models.Order.findAll({
+      where: {
+        shop_id: id,
+      },
+    });
+    ctx.body = order;
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+}
+
 module.exports = {
   //Product API
   getProduct,
@@ -422,7 +463,7 @@ module.exports = {
   updateProduct,
   deleteProduct,
 
-  //Shop API
+  //shops API
   getShop,
   getShopList,
   getProductListByShopId,
@@ -438,4 +479,7 @@ module.exports = {
   uploadProductImage,
   uploadShopImage,
   deleteImage,
+
+  //Order API
+  getOrderList
 };
