@@ -329,8 +329,8 @@ const declineOrder = async (ctx, next) => {
       } else {
         // Shop이 후불 지원
         ctx.body = {
-          status: "approved",
-          approval_id: uuid.v4(),
+          status: "declined",
+          decline_id: uuid.v4(),
           desc: "Shop에서 해당 후불 주문을 거절했습니다.",
         };
       }
