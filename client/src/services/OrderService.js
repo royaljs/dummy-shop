@@ -34,5 +34,9 @@ export default {
 
   approveOrder(shopId, orderId) {
     return client.post(`/shops/${shopId}/orders/${orderId}/approve`);
+  },
+
+  declineOrder(shopId, orderId) {
+    return client.post(`/shops/${shopId}/orders/${orderId}/decline`);
   }
 };

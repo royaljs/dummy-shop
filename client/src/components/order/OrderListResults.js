@@ -175,7 +175,14 @@ const OrderListResults = ({ orders, ...rest }) => {
                       </Button>
                       <Button
                         style={{ backgroundColor: '#f44336', color: 'white' }}
-                        onClick={() => alert('TODO: 주문 거절 처리')}
+                        onClick={() => {
+                          OrderClient.declineOrder(
+                            '12950ae2-767b-4671-81fa-09159349918e',
+                            order.id
+                          ).then((res) => {
+                            orderStore.getOrder(order.id);
+                          });
+                        }}
                       >
                         주문 거절
                       </Button>
