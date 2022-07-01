@@ -76,7 +76,7 @@ $ yarn start:dev    # Dummy Shop 서버 실행. 이때부터 dummy Shop, Product
 
 ## POST /shop/:id/approve
 * Shop에 주문 승인을 요청한다.
-* request body: order_id(주문 고유번호)
+* request body: order_id(주문 고유번호), pay_later(후불이면 true, 선불이면 false)
 * response는 현재 status(approve/decline), approve_id/decline_id, desc(주문 승인/거절에 대한 설명)으로 구성된다.
 
 # Product API
