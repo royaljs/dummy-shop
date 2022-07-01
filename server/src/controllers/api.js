@@ -208,71 +208,10 @@ const deleteShop = async (ctx, next) => {
   }
 };
 
-/**
- * 현재는 /shop/:id/appove 로 주문 승인 요청 API가 호출되면,
- * Dummy Shop 서버에서 즉시 approve/decline 응답을 한다.
- *
- * TODO:
- * 1. Shop마다 승인 요청 받은 주문 내역을 저장할 Order DB를 추가한다.
- * 2. 이 API(approveOrder)의 응답은 요청이 정상적으로 전달되었다는 메시지로 대체한다.
- * 3. Shop에 들어온 요청을 승인/거절 할 수 있는 Dummy Shop Dashboard 페이지를 개발한다.
- * 4. Dummy Shop Dashboard에서 승인/거절하면 Order 객체의 상태를 바꾸고,
- * 이 Order 객체의 상태를 polling으로 관찰할 Dummy Shop Library를 개발한다.
- */
+// Dashboard에서 주문을 승인/거절 버튼을 눌렀을때의 처리
 const approveOrder = async (ctx, next) => {
-  let isDuplicate = false;
   try {
-    const id = ctx.request.params.id;
-    const shop = await models.Shop.findOne({
-      where: {
-        id: id,
-      },
-    });
     const requestBody = ctx.request.body;
-    const order = await models.Order.findOne({
-      where: {
-        id: requestBody.order_id
-      }
-    }).then(async (data) => {
-      if (data) {
-        isDuplicate = true;
-        ctx.body = "Shop에서 해당 주문을 승인 대기중입니다.";
-      }
-    })
-      .catch(err => console.log(err))
-
-    //중복 승인 요청
-    if (isDuplicate) {
-      return;
-    }
-
-    //최초 승인 요청
-    await models.Order.create({
-      id: requestBody.order_id,
-      user_id: requestBody.user_id,
-      shop_id: id,
-      total_amount: requestBody.total_amount,
-      price_amount: requestBody.price_amount,
-      tax_amount: requestBody.tax_amount,
-      discount_amount: requestBody.discount_amount,
-      description: requestBody.description,
-    });
-    if (requestBody.items) {
-      for (item of requestBody.items) {
-        await models.Item.create({
-          id: uuid.v4(),
-          order_id: order_id,
-          product_id: item.product_id,
-          name: item.name,
-          total_amount: item.total_amount,
-          price_amount: item.price_amount,
-          tax_amount: item.tax_amount,
-          discount_amount: item.discount_amount,
-          quantity: item.quantity,
-        });
-      };
-    }
-
     // 선불 주문인 경우(결제까지 완료된 주문)
     if (!requestBody.pay_later) {
       ctx.body = {
@@ -283,17 +222,24 @@ const approveOrder = async (ctx, next) => {
 
       //주문 승인/거절 결과 Push Notification 요청 (현재는 자동승인)
       const pushNotificationServer = process.env.PUSH_NOTIFICATION_SERVER;
-      console.log(pushNotificationServer)
+      console.log(pushNotificationServer);
 
-      await axios.post(`${pushNotificationServer}/push`, {
-        user_id: requestBody.user_id,
-        notification: {
-          title: "WAPL Shop 승인",
-          body: "WAPL Shop에서 주문을 승인했습니다."
-        }
-      })
-        .then(data => console.log("호출 성공"))
-        .catch(err => console.log(err));
+      const order = await models.Order.findOne({
+        where: {
+          id: ctx.request.params.order_id,
+        },
+      });
+
+      await axios
+        .post(`${pushNotificationServer}/push`, {
+          user_id: order.getDataValue("user_id"),
+          notification: {
+            title: "Shop 주문 승인",
+            body: "Shop에서 주문을 승인했습니다.",
+          },
+        })
+        .then((data) => console.log("호출 성공"))
+        .catch((err) => console.log(err));
     } else {
       // 후불 주문인 경우
       if (!shop.get("is_pay_later_allowed")) {
@@ -368,7 +314,7 @@ const getImageListByProductId = async (ctx, next) => {
 
 /**
  * Shop별로 여러개의 이미지를 가질 수 있다고 가정.
- * /images/shop/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
+ * /images/shops/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
  * Front-end에서는 이 API로 얻은 Iamge 객체들의 image_id를 이용해 /images/:id API를 호출하여 개별 이미지를 얻을 수 있다.
  */
 const getImageListByShopId = async (ctx, next) => {
@@ -487,8 +433,7 @@ const getOrderList = async (ctx, next) => {
   } catch (err) {
     throw createError(400, err.message);
   }
-}
-
+};
 
 module.exports = {
   //Product API
@@ -516,5 +461,5 @@ module.exports = {
   deleteImage,
 
   //Order API
-  getOrderList
+  getOrderList,
 };

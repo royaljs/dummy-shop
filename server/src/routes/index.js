@@ -4,6 +4,7 @@ const shop = require("./shop");
 const product = require("./product");
 const image = require("./image");
 const order = require("./order");
+const webhook = require("./webhook");
 
 router.get("/", async (ctx, next) => {
     ctx.body = "HTTP Method, URI를 확인 하세요";
@@ -21,5 +22,8 @@ router.use("/images", image.routes());
 
 //Order API
 router.use("/orders", order.routes());
+
+//webhook API
+router.use("/webhook", webhook.routes());
 
 module.exports = router;

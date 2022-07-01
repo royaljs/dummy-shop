@@ -40,8 +40,8 @@ router.post("/", controller.deleteShop);
 
 /**
  * Shop에 주문 요청(선불/후불 주문 모두 처리)
- * @route POST /shops/:id/approve
+* @route POST /shops/:id/orders/:order_id/approve
  */
-router.post("/:id/approve", controller.approveOrder);
+router.post("/:id/orders/:order_id/approve", controller.approveOrder);
 
 module.exports = router;
