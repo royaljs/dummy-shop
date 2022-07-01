@@ -17,7 +17,7 @@ export default class OrderStore {
     OrderClient.getOrderList('12950ae2-767b-4671-81fa-09159349918e') // process.env.SHOP_ID
       .then((data) => {
         const orderList = [];
-        data.forEach((c) => {
+        data.reverse().forEach((c) => {
           const order = new Order({
             id: c.id,
             user_id: c.user_id,

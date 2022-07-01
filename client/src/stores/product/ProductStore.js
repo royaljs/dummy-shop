@@ -47,11 +47,10 @@ export default class ProductStore {
   }
 
   getImages(id) {
-    //return 'http://192.168.155.138:4001/images/5c2e0257-729d-4e38-ba47-232d523c633a'
     return ImageClient.getImages(id).then((data) => {
       const imageUrls = [];
       data.image_ids.forEach((image_id) => {
-        imageUrls.push(`http://192.168.155.138:4001/images/${image_id}`);
+        imageUrls.push(`http://localhost:3001/images/${image_id}`);
       });
       //console.log(imageUrls[0])
       return imageUrls;

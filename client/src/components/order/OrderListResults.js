@@ -16,8 +16,6 @@ import {
   TableRow,
   Typography
 } from '@material-ui/core';
-import { DataGrid } from '@material-ui/data-grid';
-import getInitials from 'src/utils/getInitials';
 
 const OrderListResults = ({ orders, ...rest }) => {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
@@ -68,19 +66,6 @@ const OrderListResults = ({ orders, ...rest }) => {
     setPage(newPage);
   };
 
-  const rows = [
-    {
-      id: 1,
-      date: new Date()
-    }
-  ];
-
-  const columns = [
-    {
-      field: 'date'
-    }
-  ];
-
   return (
     <Card {...rest}>
       <PerfectScrollbar>
@@ -108,7 +93,7 @@ const OrderListResults = ({ orders, ...rest }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.slice(0, limit).map((order) => (
+              {orders.slice(page * limit, page * limit + limit).map((order) => (
                 <TableRow
                   hover
                   key={order.id}
@@ -161,11 +146,10 @@ const OrderListResults = ({ orders, ...rest }) => {
               ))}
             </TableBody>
           </Table>
-          {/* <DataGrid rows={rows} columns={columns}/> */}
         </Box>
       </PerfectScrollbar>
       <TablePagination
-        component="div"
+        component="TableCell"
         count={orders.length}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleLimitChange}
