@@ -208,7 +208,7 @@ const deleteShop = async (ctx, next) => {
   }
 };
 
-// Dashboard에서 주문을 승인/거절 버튼을 눌렀을때의 처리
+// Dashboard에서 주문 승인 버튼을 눌렀을때의 처리
 const approveOrder = async (ctx, next) => {
   try {
     const requestBody = ctx.request.body;
@@ -220,7 +220,7 @@ const approveOrder = async (ctx, next) => {
         desc: "Shop에서 해당 주문을 승인했습니다.",
       };
 
-      //주문 승인/거절 결과 Push Notification 요청 (현재는 자동승인)
+      //주문 승인 결과 Push Notification 요청
       const pushNotificationServer = process.env.PUSH_NOTIFICATION_SERVER;
       console.log(pushNotificationServer);
 
@@ -266,6 +266,72 @@ const approveOrder = async (ctx, next) => {
           status: "approved",
           approval_id: uuid.v4(),
           desc: "Shop에서 해당 후불 주문을 승인했습니다.",
+        };
+      }
+    }
+  } catch (err) {
+    throw createError(400, err.message);
+  }
+};
+
+// Dashboard에서 주문 거절 버튼을 눌렀을때의 처리
+const declineOrder = async (ctx, next) => {
+  try {
+    const requestBody = ctx.request.body;
+    // 선불 주문인 경우(결제까지 완료된 주문)
+    if (!requestBody.pay_later) {
+      ctx.body = {
+        status: "declined",
+        decline_id: uuid.v4(),
+        desc: "Shop에서 해당 주문을 거절했습니다.",
+      };
+
+      //주문 거절 결과 Push Notification 요청
+      const pushNotificationServer = process.env.PUSH_NOTIFICATION_SERVER;
+      console.log(pushNotificationServer);
+
+      const order = await models.Order.findOne({
+        where: {
+          id: ctx.request.params.order_id,
+        },
+      });
+
+      await models.Order.update(
+        {
+          status: "declined",
+        },
+        {
+          where: {
+            id: ctx.request.params.order_id,
+          },
+        }
+      );
+
+      await axios
+        .post(`${pushNotificationServer}/push`, {
+          user_id: order.getDataValue("user_id"),
+          notification: {
+            title: "WAPL Shop 주문 거절",
+            body: "WAPL Shop에서 주문을 거절했습니다.",
+          },
+        })
+        .then((data) => console.log("호출 성공"))
+        .catch((err) => console.log(err));
+    } else {
+      // 후불 주문인 경우
+      if (!shop.get("is_pay_later_allowed")) {
+        // Shop이 후불 미지원
+        ctx.body = {
+          status: "declined",
+          decline_id: uuid.v4(),
+          desc: "후불 결제가 지원되지 않는 Shop 입니다.",
+        };
+      } else {
+        // Shop이 후불 지원
+        ctx.body = {
+          status: "approved",
+          approval_id: uuid.v4(),
+          desc: "Shop에서 해당 후불 주문을 거절했습니다.",
         };
       }
     }
@@ -481,6 +547,7 @@ module.exports = {
   updateShop,
   deleteShop,
   approveOrder,
+  declineOrder,
 
   //Image Server API
   getImage,
