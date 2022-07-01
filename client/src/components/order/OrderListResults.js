@@ -16,6 +16,7 @@ import {
   TableRow,
   Typography
 } from '@material-ui/core';
+import OrderClient from '../../services/OrderService';
 
 const OrderListResults = ({ orders, ...rest }) => {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
@@ -114,7 +115,8 @@ const OrderListResults = ({ orders, ...rest }) => {
                       }}
                     >
                       <Typography color="textPrimary" variant="body1">
-                        {moment(order.createdAt).format('DD/MM/YYYY hh:mm:ss')}
+                        {order.created_at}
+                        {/* {moment(order.createdAt).format('YYYY/MM/DD hh:mm:ss')} */}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -131,7 +133,12 @@ const OrderListResults = ({ orders, ...rest }) => {
                         color: 'white',
                         marginRight: '10px'
                       }}
-                      onClick={() => alert('TODO: 주문 승인 처리')}
+                      onClick={() =>
+                        OrderClient.approveOrder(
+                          '12950ae2-767b-4671-81fa-09159349918e',
+                          order.id
+                        )
+                      }
                     >
                       주문 승인
                     </Button>

@@ -19,8 +19,10 @@ export default class Order {
       tax_amount,
       discount_amount,
       description,
-      status
+      status,
+      created_at
     } = options;
+   
     this.id = id;
     this.user_id = user_id;
     this.shop_id = shop_id;
@@ -30,5 +32,6 @@ export default class Order {
     this.discount_amount = discount_amount;
     this.description = description;
     this.status = status;
+    this.created_at = created_at;
   }
 }
