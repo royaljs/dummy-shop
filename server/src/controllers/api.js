@@ -4,6 +4,7 @@ const uuid = require("uuid"); // v4 random uuid 사용
 const fs = require("fs");
 const path = require("path");
 const mime = require("mime");
+const axios = require("axios");
 
 /**
  * Product API
@@ -186,14 +187,14 @@ const deleteShop = async (ctx, next) => {
     const id = ctx.request.params.id;
     //Sequelize Transaction 생성
     await models.sequelize.transaction(async (transaction) => {
-      //shops 삭제
+      //Shop 삭제
       await models.Shop.destroy({
         where: {
           id: id,
         },
         transaction,
       });
-      //shops에 포함된 Product 삭제
+      //Shop에 포함된 Product 삭제
       await models.Product.destroy({
         where: {
           shop_id: id,
@@ -208,7 +209,7 @@ const deleteShop = async (ctx, next) => {
 };
 
 /**
- * 현재는 /shops/:id/appove 로 주문 승인 요청 API가 호출되면,
+ * 현재는 /shop/:id/appove 로 주문 승인 요청 API가 호출되면,
  * Dummy Shop 서버에서 즉시 approve/decline 응답을 한다.
  *
  * TODO:
@@ -219,6 +220,7 @@ const deleteShop = async (ctx, next) => {
  * 이 Order 객체의 상태를 polling으로 관찰할 Dummy Shop Library를 개발한다.
  */
 const approveOrder = async (ctx, next) => {
+  let isDuplicate = false;
   try {
     const id = ctx.request.params.id;
     const shop = await models.Shop.findOne({
@@ -227,7 +229,25 @@ const approveOrder = async (ctx, next) => {
       },
     });
     const requestBody = ctx.request.body;
-    const order = await models.Order.create({
+    const order = await models.Order.findOne({
+      where: {
+        id: requestBody.order_id
+      }
+    }).then(async (data) => {
+      if (data) {
+        isDuplicate = true;
+        ctx.body = "Shop에서 해당 주문을 승인 대기중입니다.";
+      }
+    })
+      .catch(err => console.log(err))
+
+    //중복 승인 요청
+    if (isDuplicate) {
+      return;
+    }
+
+    //최초 승인 요청
+    await models.Order.create({
       id: requestBody.order_id,
       user_id: requestBody.user_id,
       shop_id: id,
@@ -236,9 +256,9 @@ const approveOrder = async (ctx, next) => {
       tax_amount: requestBody.tax_amount,
       discount_amount: requestBody.discount_amount,
       description: requestBody.description,
-      });
+    });
     if (requestBody.items) {
-      requestBody.items.forEach(async (item) => {
+      for (item of requestBody.items) {
         await models.Item.create({
           id: uuid.v4(),
           order_id: order_id,
@@ -250,30 +270,44 @@ const approveOrder = async (ctx, next) => {
           discount_amount: item.discount_amount,
           quantity: item.quantity,
         });
-      });
+      };
     }
 
     // 선불 주문인 경우(결제까지 완료된 주문)
     if (!requestBody.pay_later) {
       ctx.body = {
-        status: "approve",
-        approve_id: uuid.v4(),
+        status: "approved",
+        approval_id: uuid.v4(),
         desc: "Shop에서 해당 주문을 승인했습니다.",
       };
+
+      //주문 승인/거절 결과 Push Notification 요청 (현재는 자동승인)
+      const pushNotificationServer = process.env.PUSH_NOTIFICATION_SERVER;
+      console.log(pushNotificationServer)
+
+      await axios.post(`${pushNotificationServer}/push`, {
+        user_id: requestBody.user_id,
+        notification: {
+          title: "WAPL Shop 승인",
+          body: "WAPL Shop에서 주문을 승인했습니다."
+        }
+      })
+        .then(data => console.log("호출 성공"))
+        .catch(err => console.log(err));
     } else {
       // 후불 주문인 경우
       if (!shop.get("is_pay_later_allowed")) {
         // Shop이 후불 미지원
         ctx.body = {
-          status: "decline",
+          status: "declined",
           decline_id: uuid.v4(),
           desc: "후불 결제가 지원되지 않는 Shop 입니다.",
         };
       } else {
         // Shop이 후불 지원
         ctx.body = {
-          status: "approve",
-          approve_id: uuid.v4(),
+          status: "approved",
+          approval_id: uuid.v4(),
           desc: "Shop에서 해당 후불 주문을 승인했습니다.",
         };
       }
@@ -334,7 +368,7 @@ const getImageListByProductId = async (ctx, next) => {
 
 /**
  * Shop별로 여러개의 이미지를 가질 수 있다고 가정.
- * /images/shops/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
+ * /images/shop/:id 로 호출하면 해당 shop_id를 갖는 Image 객체의 목록이 반환된다.
  * Front-end에서는 이 API로 얻은 Iamge 객체들의 image_id를 이용해 /images/:id API를 호출하여 개별 이미지를 얻을 수 있다.
  */
 const getImageListByShopId = async (ctx, next) => {
@@ -384,7 +418,7 @@ const uploadProductImage = async (ctx, next) => {
   }
 };
 
-//shops 이미지를 업로드 한다.
+//Shop 이미지를 업로드 한다.
 const uploadShopImage = async (ctx, next) => {
   try {
     const id = ctx.request.params.id;
@@ -455,6 +489,7 @@ const getOrderList = async (ctx, next) => {
   }
 }
 
+
 module.exports = {
   //Product API
   getProduct,
@@ -463,7 +498,7 @@ module.exports = {
   updateProduct,
   deleteProduct,
 
-  //shops API
+  //Shop API
   getShop,
   getShopList,
   getProductListByShopId,
