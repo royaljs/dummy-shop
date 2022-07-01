@@ -1,25 +1,13 @@
 import { useState, useContext } from 'react';
+import { makeStyles } from '@material-ui/core';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import {
-  Box,
-  Button,
-  Card,
-  Checkbox,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TablePagination,
-  TableRow,
-  Typography,
-  ThemeProvider
-} from '@material-ui/core';
-import OrderClient from '../../services/OrderService';
+import { Box, Button, Card, Chip, ThemeProvider } from '@material-ui/core';
+import { DataGrid } from '@material-ui/data-grid';
 import { createTheme } from '@material-ui/core/styles';
 import { StoreContext } from '../../stores/RootStore';
+import OrderClient from '../../services/OrderService';
 
 const theme = createTheme({
   palette: {
@@ -28,6 +16,21 @@ const theme = createTheme({
     },
     secondary: {
       main: '#8bc34a'
+    }
+  }
+});
+
+const useStyles = makeStyles({
+  //DataGrid cell 클릭시 outline 생기지 않도록 설정
+  root: {
+    '&.MuiDataGrid-root .MuiDataGrid-cell:focus': {
+      outline: 'none'
+    },
+    '&.MuiDataGrid-root .MuiDataGrid-columnHeader:focus': {
+      outline: 'none'
+    },
+    '&.MuiDataGrid-root .MuiDataGrid-columnHeaderCheckbox:focus': {
+      outline: 'none'
     }
   }
 });
@@ -75,134 +78,147 @@ const OrderListResults = ({ orders, ...rest }) => {
   };
 
   const handleLimitChange = (event) => {
-    setLimit(event.target.value);
+    //setLimit(event.target.value); //Table 전용
+    setLimit(event.pageSize); //DataGrid 전용
     setPage(0);
   };
 
-  const handlePageChange = (event, newPage) => {
-    setPage(newPage);
+  const handlePageChange = (event) => {
+    setPage(event.page);
   };
+
+  const columns = [
+    {
+      field: 'created_at',
+      headerName: '주문 시각',
+      description: 'Dummy Shop에 주문이 들어온 시각입니다.',
+      width: 200
+    },
+    {
+      field: 'id',
+      headerName: '주문 번호',
+      description: 'Dummy Shop에 요청된 주문 고유번호 입니다.',
+      width: 150
+    },
+    {
+      field: 'id1',
+      headerName: '좌석 번호',
+      description: 'Dummy Shop 매장에 서빙할 좌석 번호입니다.',
+      width: 150
+    },
+    {
+      field: 'user_id',
+      headerName: '주문자 ID',
+      description: 'Dummy Shop에 주문한 고객의 고유번호 입니다.',
+      width: 250
+    },
+    {
+      field: 'status',
+      headerName: '주문 승인 상태',
+      description: '주문의 승인 상태를 나타냅니다.',
+      sortable: false,
+      width: 160,
+      renderCell: (params) => {
+        const order = params.row;
+        return (
+          <>
+            <Chip
+              color={(() => {
+                if (order.status == 'pending') {
+                  return 'primary';
+                } else if (order.status == 'approved') {
+                  return 'secondary';
+                }
+              })()}
+              label={order.status}
+              size="small"
+            />
+          </>
+        );
+      }
+    },
+    {
+      field: 'status1',
+      headerName: '주문 처리',
+      description: '버튼을 눌러 주문에 대한 승인/거절 처리를 할 수 있습니다.',
+      sortable: false,
+      width: 160,
+      renderCell: (params) => {
+        const order = params.row;
+        return (
+          <>
+            <Button
+              style={{
+                backgroundColor: '#357a38',
+                color: 'white',
+                marginRight: '10px'
+              }}
+              onClick={() => {
+                OrderClient.approveOrder(
+                  '12950ae2-767b-4671-81fa-09159349918e',
+                  order.id
+                ).then((res) => {
+                  orderStore.getOrder(order.id);
+                });
+              }}
+            >
+              주문 승인
+            </Button>
+            <Button
+              style={{ backgroundColor: '#f44336', color: 'white' }}
+              onClick={() => {
+                OrderClient.declineOrder(
+                  '12950ae2-767b-4671-81fa-09159349918e',
+                  order.id
+                ).then((res) => {
+                  orderStore.getOrder(order.id);
+                });
+              }}
+            >
+              주문 거절
+            </Button>
+          </>
+        );
+      }
+    }
+  ];
+
+  //DataGrid 사용을 위해 orderStore의 주문 목록을 rows에 feed
+  let rows = [];
+  orders.map((order) => {
+    rows.push(order);
+  });
+
+  const classes = useStyles();
 
   return (
     <ThemeProvider theme={theme}>
       <Card {...rest}>
         <PerfectScrollbar>
-          <Box sx={{ minWidth: 1050 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedOrderIds.length === orders.length}
-                    color="primary"
-                    indeterminate={
-                      selectedOrderIds.length > 0 &&
-                      selectedOrderIds.length < orders.length
-                    }
-                    onChange={handleSelectAll}
-                  />
-                </TableCell>
-                <TableCell>주문 시각</TableCell>
-                <TableCell>주문 번호</TableCell>
-                <TableCell>좌석 번호</TableCell>
-                <TableCell>주문자 (WAPL Pay ID)</TableCell>
-                <TableCell>주문 승인 상태</TableCell>
-                <TableCell>주문 처리</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {orders
-                .slice(page * limit, page * limit + limit)
-                .map((order) => (
-                  <TableRow
-                    hover
-                    key={order.id}
-                    selected={selectedOrderIds.indexOf(order.id) !== -1}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedOrderIds.indexOf(order.id) !== -1}
-                        onChange={(event) => handleSelectOne(event, order.id)}
-                        value="true"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{
-                          alignItems: 'center',
-                          display: 'flex'
-                        }}
-                      >
-                        <Typography color="textPrimary" variant="body1">
-                          {order.created_at}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{order.id}</TableCell>
-                    <TableCell>{}좌석번호</TableCell>
-                    <TableCell>{order.user_id}</TableCell>
-                    <TableCell>
-                      <Chip
-                        color={(() => {
-                          if (order.status == 'pending') {
-                            return 'primary';
-                          } else if (order.status == 'approved') {
-                            return 'secondary';
-                          }
-                        })()}
-                        label={order.status}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        style={{
-                          backgroundColor: '#357a38',
-                          color: 'white',
-                          marginRight: '10px'
-                        }}
-                        onClick={() => {
-                          OrderClient.approveOrder(
-                            '12950ae2-767b-4671-81fa-09159349918e',
-                            order.id
-                          ).then((res) => {
-                            orderStore.getOrder(order.id);
-                          });
-                        }}
-                      >
-                        주문 승인
-                      </Button>
-                      <Button
-                        style={{ backgroundColor: '#f44336', color: 'white' }}
-                        onClick={() => {
-                          OrderClient.declineOrder(
-                            '12950ae2-767b-4671-81fa-09159349918e',
-                            order.id
-                          ).then((res) => {
-                            orderStore.getOrder(order.id);
-                          });
-                        }}
-                      >
-                        주문 거절
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </Box>
-      </PerfectScrollbar>
-      <TablePagination
-        component="div"
-        count={orders.length}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleLimitChange}
-        page={page}
-        rowsPerPage={limit}
-        rowsPerPageOptions={[5, 10, 25]}
-      />
-    </Card>
-  </ThemeProvider>
+          <Box sx={{ minWidth: 1050, height: 650 }}>
+            <DataGrid
+              className={classes.root}
+              rows={rows}
+              columns={columns}
+              page={page}
+              checkboxSelection
+              disableSelectionOnClick
+              pagination
+              pageSize={limit}
+              rowsPerPageOptions={[10, 20, 50]}
+              onPageSizeChange={handleLimitChange}
+              onPageChange={handlePageChange}
+              sortModel={[
+                {
+                  field: 'created_at',
+                  sort: 'desc'
+                }
+              ]}
+            />
+          </Box>
+        </PerfectScrollbar>
+      </Card>
+    </ThemeProvider>
   );
 };
 

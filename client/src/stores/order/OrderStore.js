@@ -33,9 +33,6 @@ export default class OrderStore {
           });
           orderList.push(order);
         });
-        orderList.sort(function (a, b) {
-          return a.created_at - b.created_at;
-        });
         this.setOrderList(orderList);
       })
       .catch((err) => {
@@ -54,7 +51,6 @@ export default class OrderStore {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
   delete(id) {
     return OrderClient.deleteOrder(id).then((data) => {
       return data;
