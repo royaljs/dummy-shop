@@ -1,6 +1,5 @@
 import { useState, useContext } from 'react';
 import { observer } from 'mobx-react';
-import { makeAutoObservable } from 'mobx';
 import PropTypes from 'prop-types';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import {

@@ -67,7 +67,7 @@ const LatestOrders = (props) => {
               </TableHead>
               <TableBody>
                 {orderStore.orderList.slice(0, 5).map((order, i) => (
-                  <TableRow hover key={order}>
+                  <TableRow hover key={order.id}>
                     <TableCell>{order.id}</TableCell>
                     <TableCell>{order.user_id}</TableCell>
                     <TableCell>{order.created_at}</TableCell>
