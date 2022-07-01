@@ -4,8 +4,8 @@ const client = new ApiClient('http://localhost:3001'); //process.env.REACT_APP_B
 const PATH = 'shops';
 
 export default {
-  getOrder(shopId) {
-    return client.get(`/orders/${shopId}`).then((res) => {
+  getOrder(shopId, orderId) {
+    return client.get(`/shops/${shopId}/orders/${orderId}`).then((res) => {
       return res.data;
     });
   },
@@ -27,13 +27,12 @@ export default {
   },
 
   getOrderList(shopId) {
-    return client.get(`/orders/${shopId}`).then((res) => {
+    return client.get(`/shops/${shopId}/orders`).then((res) => {
       return res.data;
     });
   },
 
-  approveOrder(shopId, orderId){
+  approveOrder(shopId, orderId) {
     return client.post(`/shops/${shopId}/orders/${orderId}/approve`);
-
   }
 };

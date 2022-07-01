@@ -44,10 +44,14 @@ export default class OrderStore {
       });
   }
 
-  get(id) {
-    OrderClient.getOrder(id).then((data) => {
-      this.setOrder(new Order(data));
-    });
+  getOrder(id) {
+    OrderClient.getOrder('12950ae2-767b-4671-81fa-09159349918e', id).then(
+      (data) => {
+        const index = this.orderList.findIndex((element) => element.id == id);
+        this.orderList[index] = new Order(data);
+        return data;
+      }
+    );
   }
 
   // eslint-disable-next-line class-methods-use-this

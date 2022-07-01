@@ -2,11 +2,9 @@ import { Helmet } from 'react-helmet';
 import { Box, Container } from '@material-ui/core';
 import OrderListResults from 'src/components/order/OrderListResults';
 import OrderListToolbar from 'src/components/order/OrderListToolbar';
-import { useEffect, useContext } from 'react';
+import { useContext } from 'react'
 import { observer } from 'mobx-react';
 import { StoreContext } from '../stores/RootStore';
-
-import orders from 'src/__mocks__/orders';
 
 const OrderList = () => {
   const { orderStore } = useContext(StoreContext);

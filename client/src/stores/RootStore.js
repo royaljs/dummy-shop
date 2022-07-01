@@ -16,6 +16,3 @@ export class RootStore {
 const stores = new RootStore();
 
 export const StoreContext = createContext(stores);
-
-// const StoreContext = createContext();
-// export default StoreContext;

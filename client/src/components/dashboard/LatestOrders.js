@@ -16,11 +16,24 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  Tooltip
+  Tooltip,
+  ThemeProvider
 } from '@material-ui/core';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../../stores/RootStore';
+import { createTheme } from '@material-ui/core/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#5664d2'
+    },
+    secondary: {
+      main: '#4caf50'
+    }
+  }
+});
 
 const LatestOrders = (props) => {
   const { orderStore } = useContext(StoreContext);
@@ -31,61 +44,71 @@ const LatestOrders = (props) => {
   const navigate = useNavigate();
 
   return (
-    <Card {...props}>
-      <CardHeader title="최근 주문" />
-      <Divider />
-      <PerfectScrollbar>
-        <Box sx={{ minWidth: 800 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>주문 번호</TableCell>
-                <TableCell>고객</TableCell>
-                <TableCell sortDirection="desc">
-                  <Tooltip enterDelay={300} title="Sort">
-                    <TableSortLabel active direction="desc">
-                      주문 일시
-                    </TableSortLabel>
-                  </Tooltip>
+    <ThemeProvider theme={theme}>
+      <Card {...props}>
+        <CardHeader title="최근 주문" />
+        <Divider />
+        <PerfectScrollbar>
+          <Box sx={{ minWidth: 800 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>주문 번호</TableCell>
+                  <TableCell>고객</TableCell>
+                  <TableCell sortDirection="desc">
+                    <Tooltip enterDelay={300} title="Sort">
+                      <TableSortLabel active direction="desc">
+                        주문 일시
+                      </TableSortLabel>
+                    </Tooltip>
                 </TableCell>
                 <TableCell>주문 상태</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {orderStore.orderList.slice(0, 5).map((order, i) => (
-                <TableRow hover key={order}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.user_id}</TableCell>
-                  <TableCell>
-                    {moment(order.createdAt).format('DD/MM/YYYY')}
-                  </TableCell>
-                  <TableCell>
-                    <Chip color="primary" label={order.status} size="small" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
-      </PerfectScrollbar>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          p: 2
-        }}
-      >
-        <Button
-          color="primary"
-          endIcon={<ArrowRightIcon />}
-          size="small"
-          variant="text"
-          onClick={() => navigate('/shop/orders', { replace: true })}
+              </TableHead>
+              <TableBody>
+                {orderStore.orderList.slice(0, 5).map((order, i) => (
+                  <TableRow hover key={order}>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{order.user_id}</TableCell>
+                    <TableCell>{order.created_at}</TableCell>
+                    <TableCell>
+                      <Chip
+                        color={(() => {
+                          if (order.status == 'pending') {
+                            return 'primary';
+                          } else if (order.status == 'approved') {
+                            return 'secondary';
+                          }
+                        })()}
+                        label={order.status}
+                        size="small"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        </PerfectScrollbar>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            p: 2
+          }}
         >
-          모두 보기
-        </Button>
-      </Box>
-    </Card>
+          <Button
+            color="primary"
+            endIcon={<ArrowRightIcon />}
+            size="small"
+            variant="text"
+            onClick={() => navigate('/shop/orders', { replace: true })}
+          >
+            모두 보기
+          </Button>
+        </Box>
+      </Card>
+    </ThemeProvider>
   );
 };
 export default observer(LatestOrders);

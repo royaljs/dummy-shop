@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { observer } from 'mobx-react';
+import { makeAutoObservable } from 'mobx';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import {
   Box,
@@ -14,11 +15,26 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography
+  Typography,
+  ThemeProvider
 } from '@material-ui/core';
 import OrderClient from '../../services/OrderService';
+import { createTheme } from '@material-ui/core/styles';
+import { StoreContext } from '../../stores/RootStore';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#5664d2'
+    },
+    secondary: {
+      main: '#8bc34a'
+    }
+  }
+});
 
 const OrderListResults = ({ orders, ...rest }) => {
+  const { orderStore } = useContext(StoreContext);
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
@@ -61,6 +77,7 @@ const OrderListResults = ({ orders, ...rest }) => {
 
   const handleLimitChange = (event) => {
     setLimit(event.target.value);
+    setPage(0);
   };
 
   const handlePageChange = (event, newPage) => {
@@ -68,12 +85,13 @@ const OrderListResults = ({ orders, ...rest }) => {
   };
 
   return (
-    <Card {...rest}>
-      <PerfectScrollbar>
-        <Box sx={{ minWidth: 1050 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
+    <ThemeProvider theme={theme}>
+      <Card {...rest}>
+        <PerfectScrollbar>
+          <Box sx={{ minWidth: 1050 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
                     checked={selectedOrderIds.length === orders.length}
@@ -88,69 +106,82 @@ const OrderListResults = ({ orders, ...rest }) => {
                 <TableCell>주문 시각</TableCell>
                 <TableCell>주문 번호</TableCell>
                 <TableCell>좌석 번호</TableCell>
-                <TableCell>주문자 ID</TableCell>
+                <TableCell>주문자 (WAPL Pay ID)</TableCell>
                 <TableCell>주문 승인 상태</TableCell>
                 <TableCell>주문 처리</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.slice(page * limit, page * limit + limit).map((order) => (
-                <TableRow
-                  hover
-                  key={order.id}
-                  selected={selectedOrderIds.indexOf(order.id) !== -1}
-                >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedOrderIds.indexOf(order.id) !== -1}
-                      onChange={(event) => handleSelectOne(event, order.id)}
-                      value="true"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box
-                      sx={{
-                        alignItems: 'center',
-                        display: 'flex'
-                      }}
-                    >
-                      <Typography color="textPrimary" variant="body1">
-                        {order.created_at}
-                        {/* {moment(order.createdAt).format('YYYY/MM/DD hh:mm:ss')} */}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{}좌석번호</TableCell>
-                  <TableCell>{order.user_id}</TableCell>
-                  <TableCell>
-                    <Chip color="primary" label={order.status} size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      style={{
-                        backgroundColor: 'green',
-                        color: 'white',
-                        marginRight: '10px'
-                      }}
-                      onClick={() =>
-                        OrderClient.approveOrder(
-                          '12950ae2-767b-4671-81fa-09159349918e',
-                          order.id
-                        )
-                      }
-                    >
-                      주문 승인
-                    </Button>
-                    <Button
-                      style={{ backgroundColor: 'red', color: 'white' }}
-                      onClick={() => alert('TODO: 주문 거절 처리')}
-                    >
-                      주문 거절
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {orders
+                .slice(page * limit, page * limit + limit)
+                .map((order) => (
+                  <TableRow
+                    hover
+                    key={order.id}
+                    selected={selectedOrderIds.indexOf(order.id) !== -1}
+                  >
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedOrderIds.indexOf(order.id) !== -1}
+                        onChange={(event) => handleSelectOne(event, order.id)}
+                        value="true"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          alignItems: 'center',
+                          display: 'flex'
+                        }}
+                      >
+                        <Typography color="textPrimary" variant="body1">
+                          {order.created_at}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{}좌석번호</TableCell>
+                    <TableCell>{order.user_id}</TableCell>
+                    <TableCell>
+                      <Chip
+                        color={(() => {
+                          if (order.status == 'pending') {
+                            return 'primary';
+                          } else if (order.status == 'approved') {
+                            return 'secondary';
+                          }
+                        })()}
+                        label={order.status}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        style={{
+                          backgroundColor: '#357a38',
+                          color: 'white',
+                          marginRight: '10px'
+                        }}
+                        onClick={() => {
+                          OrderClient.approveOrder(
+                            '12950ae2-767b-4671-81fa-09159349918e',
+                            order.id
+                          ).then((res) => {
+                            orderStore.getOrder(order.id);
+                          });
+                        }}
+                      >
+                        주문 승인
+                      </Button>
+                      <Button
+                        style={{ backgroundColor: '#f44336', color: 'white' }}
+                        onClick={() => alert('TODO: 주문 거절 처리')}
+                      >
+                        주문 거절
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </Box>
@@ -165,6 +196,7 @@ const OrderListResults = ({ orders, ...rest }) => {
         rowsPerPageOptions={[5, 10, 25]}
       />
     </Card>
+  </ThemeProvider>
   );
 };
 
@@ -172,4 +204,4 @@ OrderListResults.propTypes = {
   orders: PropTypes.array.isRequired
 };
 
-export default OrderListResults;
+export default observer(OrderListResults);
