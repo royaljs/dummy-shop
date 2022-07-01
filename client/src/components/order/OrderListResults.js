@@ -193,7 +193,7 @@ const OrderListResults = ({ orders, ...rest }) => {
         </Box>
       </PerfectScrollbar>
       <TablePagination
-        component="TableCell"
+        component="div"
         count={orders.length}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleLimitChange}
